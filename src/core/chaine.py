@@ -1,9 +1,35 @@
 import hashlib, json , datetime
 
+from src.config.dir import Dir
+
 class Blockchaine :
     def __init__(self):
-        self.chain = []
+        self.dir = Dir()
+        self.chain = self.read_blockchain()
         self.create_block(proof = 1, previous_hash = '0')
+        
+
+    def read_blockchain(self):
+        try:
+            with open(self.dir.get_data_directory(), 'r') as file:
+                return json.loads(file.read())
+        except FileNotFoundError :
+            return []
+        except json.decoder.JSONDecodeError:
+            return []
+
+    def write_blockchain(self):
+        with open(self.dir.get_data_directory(), 'w') as file:
+            file.write(json.dumps(self.chain))
+    
+    def mine_block(self):
+        previous_block = self.get_previous_block()
+        previous_proof = previous_block['proof']
+        proof = self.proof_of_work(previous_proof)
+        previous_hash = self.hash(previous_block)
+        block = self.create_block(proof, previous_hash)
+        return block
+    
     
     def create_block(self, proof, previous_hash):
         block = {'index': len(self.chain) + 1,
